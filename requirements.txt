@@ -1,0 +1,8 @@
+python-telegram-bot==20.7
+gspread
+oauth2client
+google-api-python-client
+google-auth
+google-auth-oauthlib
+Pillow
+python-dotenv
