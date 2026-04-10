@@ -404,18 +404,21 @@ def load_ticket_cache():
     
     global TICKET_CACHE, TICKET_INDEX
 
+    print("START LOAD CACHE")
+
     current_year = datetime.now().year
     years = [current_year-1, current_year, current_year+1]
 
     TICKET_CACHE.clear()
     TICKET_INDEX.clear()
 
+    total_loaded = 0
+
     for year in years:
 
         for month in range(1, 13):
 
             try:
-                # ✅ ambil hanya file yang sudah ada
                 sheet_id = get_existing_spreadsheet(year, month)
 
                 if not sheet_id:
@@ -432,34 +435,44 @@ def load_ticket_cache():
 
                     col = headers.index("NOMOR TIKET") + 1
 
-                    # ✅ ambil terbatas (biar cepat)
-                    values = ws.get_values(f"{chr(64+col)}2:{chr(64+col)}500")
+                    # 🔥 ambil lebih kecil (biar cepat)
+                    values = ws.get_values(f"{chr(64+col)}2:{chr(64+col)}300")
 
-                    for i, row in enumerate(values, start=2):
+                    if not values:
+                        continue
+
+                    for row in values:
 
                         if not row:
                             continue
 
                         v = row[0]
 
-                        if v:
-                            ticket = safe_upper(v)
+                        if not v:
+                            continue
 
-                            TICKET_CACHE.add(ticket)
+                        ticket = safe_upper(v)
 
-                            TICKET_INDEX[ticket] = {
-                                "sheet_id": sheet_id,
-                                "sheet_name": ws.title,
-                                "year": year
-                            }
+                        if ticket in TICKET_CACHE:
+                            continue
 
-                print(f"LOAD OK: {year}-{month}")
+                        TICKET_CACHE.add(ticket)
+
+                        TICKET_INDEX[ticket] = {
+                            "sheet_id": sheet_id,
+                            "sheet_name": ws.title,
+                            "year": year
+                        }
+
+                        total_loaded += 1
+
+                print(f"OK: {year}-{month} | total sementara: {total_loaded}")
 
             except Exception as e:
-                print(f"ERROR LOAD {year}-{month}:", e)
+                print(f"ERROR {year}-{month}: {e}")
                 continue
 
-    print("TICKET CACHE LOADED:", len(TICKET_CACHE))
+    print("SELESAI LOAD CACHE:", total_loaded)
     
 def ensure_sheet(master, sheet_name):
     
