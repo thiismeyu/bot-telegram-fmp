@@ -544,6 +544,11 @@ def find_ticket_global(ticket):
     
     ticket = safe_upper(ticket)
 
+    # 🔥 lazy cache
+    if not TICKET_CACHE:
+        print("LAZY LOAD CACHE...")
+        load_ticket_cache()
+
     if ticket in TICKET_INDEX:
 
         data = TICKET_INDEX[ticket]
@@ -556,6 +561,7 @@ def find_ticket_global(ticket):
         return ws, row, data["year"]
 
     return None, None, None
+
 def find_ticket_row(ws, ticket):
     
     headers = [h.strip().upper() for h in ws.row_values(1)]
@@ -574,7 +580,7 @@ def find_ticket_row(ws, ticket):
         if row and safe_upper(row[0]) == ticket:
             return i
 
-        return None
+    return None
 
 # ================= FOTO LIST DINAMIS =================
 def foto_list(ws, row):

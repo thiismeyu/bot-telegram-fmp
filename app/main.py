@@ -25,8 +25,7 @@ def run_health_server():
 
 def main():
 
-    print("Loading ticket cache...")
-    load_ticket_cache()
+  
 
     # Health server Railway
     threading.Thread(target=run_health_server, daemon=True).start()
