@@ -548,7 +548,8 @@ def find_ticket_global(ticket):
 
         data = TICKET_INDEX[ticket]
 
-        ws = data["sheet"]
+        master = client.open_by_key(data["sheet_id"])
+        ws = master.worksheet(data["sheet_name"])
 
         row = find_ticket_row(ws, ticket)
 
@@ -564,16 +565,16 @@ def find_ticket_row(ws, ticket):
 
     col = headers.index("NOMOR TIKET") + 1
 
-    values = ws.col_values(col)
+    values = ws.get_values(f"{chr(64+col)}2:{chr(64+col)}1000")
 
     ticket = safe_upper(ticket)
 
-    for i, v in enumerate(values[1:], start=2):
-
-        if safe_upper(v) == ticket:
+    for i, row in enumerate(values, start=2):
+    
+        if row and safe_upper(row[0]) == ticket:
             return i
 
-    return None
+        return None
 
 # ================= FOTO LIST DINAMIS =================
 def foto_list(ws, row):
@@ -1071,7 +1072,8 @@ async def text(update:Update,context:ContextTypes.DEFAULT_TYPE):
             TICKET_CACHE.add(d["INC"])
 
             TICKET_INDEX[d["INC"]] = {
-                "sheet": ws,
+                "sheet_id": sheet_id,
+                "sheet_name": ws.title,
                 "year": year
             }
 
