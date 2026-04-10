@@ -5,8 +5,8 @@ def admin_menu():
         [["📊 Dashboard User"],
          ["📊 Dashboard GAMAS"],
          ["👥 Kelola User"],
-         ["📋 List Pending"],
-         ["🔙 KEMBALI"]],
+         ["📋 List Pending"]
+         ],
         resize_keyboard=True
     )
 

@@ -67,6 +67,23 @@ def get_formula_cell(ws, row, col):
         return ""
 
     return row_data[col-1]
+
+def get_existing_spreadsheet(year, month):
+    
+    folder_id = get_year_folder_data(year)
+    month_name = BULAN_FOLDER[month]
+
+    title = f"GAMAS_{month_name}_{year}"
+
+    files = drive.files().list(
+        q=f"name='{title}' and '{folder_id}' in parents and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false",
+        fields="files(id)"
+    ).execute()
+
+    if files["files"]:
+        return files["files"][0]["id"]
+
+    return None
     
 def get_gamas_dashboard():
     
@@ -79,20 +96,28 @@ def get_gamas_dashboard():
     per_sheet_data = {}
 
     for year in years:
-        try:
-            sheet_id = get_year_spreadsheet(year, datetime(year,1,1))
-            master = client.open_by_key(sheet_id)
 
-            total_year = 0
+        total_year = 0
+
+        # 🔥 LOOP SEMUA BULAN
+        for month in range(1, 13):
+
+            try:
+                sheet_id = get_existing_spreadsheet(year, month)
+
+                if not sheet_id:
+                    continue
+
+                master = client.open_by_key(sheet_id)
+            except:
+                continue
 
             for ws in master.worksheets():
 
-                # Ambil hanya kolom yang diperlukan (lebih ringan)
                 sto_col = ws.col_values(2)
                 date_col = ws.col_values(5)
                 bulan_col = ws.col_values(10)
 
-                # Jika hanya header
                 if len(sto_col) <= 1:
                     continue
 
@@ -112,23 +137,22 @@ def get_gamas_dashboard():
 
                 per_sheet_data[sheet_name]["total"] += count
 
-                # Loop data mulai dari index 1 (skip header)
                 for i in range(1, len(sto_col)):
 
-                    sto = sto_col[i]
+                    sto = safe_upper(sto_col[i])
                     bulan = bulan_col[i] if i < len(bulan_col) else ""
                     tanggal = date_col[i] if i < len(date_col) else ""
 
-                    # Hitung STO
+                    # hitung STO
                     if sto in total_per_sto:
                         total_per_sto[sto] += 1
 
-                    # Hitung bulan
+                    # hitung bulan
                     if bulan:
                         per_sheet_data[sheet_name]["bulan"][bulan] = \
                             per_sheet_data[sheet_name]["bulan"].get(bulan, 0) + 1
 
-                    # Hitung rentang tanggal TANPA simpan semua tanggal
+                    # hitung rentang tanggal
                     try:
                         d = datetime.strptime(tanggal, "%d/%m/%Y")
 
@@ -141,11 +165,8 @@ def get_gamas_dashboard():
                     except:
                         pass
 
-            if total_year > 0:
-                total_per_year[year] = total_year
-
-        except:
-            continue
+        if total_year > 0:
+            total_per_year[year] = total_year
 
     return total_all, total_per_year, total_per_sto, per_sheet_data
 def get_gamas_dashboard_cached():
