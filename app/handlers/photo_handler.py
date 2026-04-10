@@ -1,10 +1,8 @@
-from multiprocessing import context
-
 from telegram import Update
 from telegram.ext import ContextTypes
 import io
 import uuid
-from datetime import date, datetime
+from datetime import  datetime
 from googleapiclient.http import MediaIoBaseUpload
 from app.keyboards import foto_menu
 from app.utils import compress, safe_label
@@ -84,7 +82,11 @@ async def photo(update:Update,context:ContextTypes.DEFAULT_TYPE):
         formula = f'=HYPERLINK("{link}";"{context.user_data["label"]}")'
         lines[line] = formula
 
-        ws.update_cell(row, col, "\n".join(lines))
+        links = [l.replace("=", "") for l in lines if "HYPERLINK" in l]
+
+        formula = f'=TEXTJOIN(CHAR(10); TRUE; {";".join(links)})'
+
+        ws.update_cell(row, col, formula)
 
         context.user_data["mode"] = "WAIT_FOTO"
 
@@ -158,13 +160,25 @@ async def photo(update:Update,context:ContextTypes.DEFAULT_TYPE):
     # ambil isi lama cell
     old = get_formula_cell(ws, row, col) or ""
 
-    new_link = f'=HYPERLINK("{link}";"{label}")'
+    new_link = f'HYPERLINK("{link}";"{label}")'
 
-    # jika sudah ada foto dengan label sama → tambahkan di bawahnya
+    links = []
+
+    # ambil link lama kalau ada
     if old.strip():
-        formula = old + "\n" + new_link
-    else:
-        formula = new_link
+        if "TEXTJOIN" in old:
+            # ambil isi dalam TEXTJOIN
+            content = old.replace("=TEXTJOIN(CHAR(10); TRUE; ", "").rstrip(")")
+            links = [x.strip() for x in content.split(");") if "HYPERLINK" in x]
+            links = [l + ")" if not l.endswith(")") else l for l in links]
+        elif "HYPERLINK" in old:
+            links = [old.replace("=", "").strip()]
+
+    # tambah link baru
+    links.append(new_link)
+
+    # gabungkan jadi 1 formula
+    formula = f'=TEXTJOIN(CHAR(10); TRUE; {";".join(links)})'
 
     ws.update_cell(row, col, formula)
 

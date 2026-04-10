@@ -5,7 +5,6 @@ import re
 from app.services.google_services import client, drive
 from app.keyboards import *
 from app.utils import safe_upper, safe_label
-from app.config import CREDS
 from app.config import (
     USER_MANAGEMENT_ID,
     STO_MAPPING,
