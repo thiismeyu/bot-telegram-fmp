@@ -1,22 +1,24 @@
+from multiprocessing import context
+
 from telegram import Update
 from telegram.ext import ContextTypes
 import io
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from googleapiclient.http import MediaIoBaseUpload
-
 from app.keyboards import foto_menu
 from app.utils import compress, safe_label
 from app.services.google_services import drive
 from app.handlers.text_handler import (
     find_ticket_global,
-    get_year_folder_foto,   
-    get_folder,
+    get_ticket_folder,
     find_empty_foto_col,
     find_label_column, 
     foto_list,
     get_formula_cell,
-    delete_drive_file_from_cell
+    delete_drive_file_from_cell,
+    get_ticket_date,
+    
 )
 
 # ================= PHOTO HANDLER =================
@@ -41,8 +43,8 @@ async def photo(update:Update,context:ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ Data tiket tidak ditemukan.")
             return
 
-        year_id = get_year_folder_foto(year)
-        inc_id = get_folder(context.user_data["INC"], year_id)
+        date = get_ticket_date(ws, row)
+        inc_id = get_ticket_folder(context.user_data["INC"], date)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         name = f"{context.user_data['INC']}_{context.user_data['label']}_{timestamp}_{uuid.uuid4().hex[:6]}.jpg"
@@ -123,9 +125,9 @@ async def photo(update:Update,context:ContextTypes.DEFAULT_TYPE):
     if not ws:
         await update.message.reply_text("❌ Nomor tiket tidak ditemukan.")
         return
-
-    year_id=get_year_folder_foto(year)
-    inc_id=get_folder(context.user_data["INC"],year_id)
+    
+    date = get_ticket_date(ws, row)
+    inc_id = get_ticket_folder(context.user_data["INC"], date)
 
     timestamp=datetime.now().strftime("%Y%m%d_%H%M%S")
     name=f"{context.user_data['INC']}_{context.user_data['label']}_{timestamp}_{uuid.uuid4().hex[:6]}.jpg"

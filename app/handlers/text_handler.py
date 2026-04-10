@@ -268,11 +268,15 @@ def get_year_folder_data(year):
 
 def get_year_folder_foto(year):
     return get_folder(f"01_GAMAS_{year}", DRIVE_ROOT_FOTO)
-def get_month_folder_foto(parent_folder, date):
-    
-    month_name = BULAN_FOLDER[date.month]
 
-    return get_folder(month_name, parent_folder)
+
+def get_ticket_date(ws, row):
+    date_str = ws.cell(row, 5).value
+
+    if not date_str:
+        raise Exception("Tanggal tidak ditemukan di sheet")
+
+    return datetime.strptime(date_str, "%d/%m/%Y")
 
 def get_ticket_folder(ticket, date):
     
@@ -287,11 +291,7 @@ def get_ticket_folder(ticket, date):
 
     return ticket_folder
 
-def get_month_folder(parent_folder, date):
-    
-    month_name = BULAN_FOLDER[date.month]
 
-    return get_folder(month_name, parent_folder)
 
 def get_year_spreadsheet(year, date):
     cache_key = f"{year}_{date.month}"
@@ -300,9 +300,7 @@ def get_year_spreadsheet(year, date):
         return SPREADSHEET_CACHE[cache_key]
     
     folder_year = get_year_folder_data(year)
-    folder_month = get_month_folder(folder_year, date)
-
-    folder_id = folder_month
+    folder_id = folder_year
     month_name = BULAN_FOLDER[date.month]
 
     title = f"GAMAS_{month_name}_{year}"

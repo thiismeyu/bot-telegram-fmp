@@ -40,7 +40,7 @@ BULAN_FOLDER = {
     1:"01_JANUARI",
     2:"02_FEBRUARI",
     3:"03_MARET",
-    4:"04_APIL",
+    4:"04_APRIL",
     5:"05_MEI",
     6:"06_JUNI",
     7:"07_JULI",
