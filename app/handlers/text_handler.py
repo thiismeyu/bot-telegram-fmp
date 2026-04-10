@@ -402,43 +402,62 @@ def get_year_spreadsheet(year, date):
     return sheet_id
 def load_ticket_cache():
     
-    global TICKET_CACHE
+    global TICKET_CACHE, TICKET_INDEX
 
     current_year = datetime.now().year
     years = [current_year-1, current_year, current_year+1]
 
+    TICKET_CACHE.clear()
+    TICKET_INDEX.clear()
+
     for year in years:
 
-        try:
+        for month in range(1, 13):
 
-            sheet_id = get_year_spreadsheet(year, datetime(year,1,1))
-            master = client.open_by_key(sheet_id)
+            try:
+                # ✅ ambil hanya file yang sudah ada
+                sheet_id = get_existing_spreadsheet(year, month)
 
-            for ws in master.worksheets():
-
-                headers = [h.strip().upper() for h in ws.row_values(1)]
-
-                if "NOMOR TIKET" not in headers:
+                if not sheet_id:
                     continue
 
-                col = headers.index("NOMOR TIKET") + 1
+                master = client.open_by_key(sheet_id)
 
-                values = ws.col_values(col)
+                for ws in master.worksheets():
 
-                for i, v in enumerate(values[1:], start=2):
-    
-                    if v:
-                        ticket = safe_upper(v)
+                    headers = [h.strip().upper() for h in ws.row_values(1)]
 
-                        TICKET_CACHE.add(ticket)
+                    if "NOMOR TIKET" not in headers:
+                        continue
 
-                        TICKET_INDEX[ticket] = {
-                            "sheet": ws,
-                            "year": year
-                        }
+                    col = headers.index("NOMOR TIKET") + 1
 
-        except:
-            continue
+                    # ✅ ambil terbatas (biar cepat)
+                    values = ws.get_values(f"{chr(64+col)}2:{chr(64+col)}500")
+
+                    for i, row in enumerate(values, start=2):
+
+                        if not row:
+                            continue
+
+                        v = row[0]
+
+                        if v:
+                            ticket = safe_upper(v)
+
+                            TICKET_CACHE.add(ticket)
+
+                            TICKET_INDEX[ticket] = {
+                                "sheet_id": sheet_id,
+                                "sheet_name": ws.title,
+                                "year": year
+                            }
+
+                print(f"LOAD OK: {year}-{month}")
+
+            except Exception as e:
+                print(f"ERROR LOAD {year}-{month}:", e)
+                continue
 
     print("TICKET CACHE LOADED:", len(TICKET_CACHE))
     
